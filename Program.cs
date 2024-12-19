@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -13,7 +14,7 @@ class Program
     {
         if (args.Length < 1)
         {
-            Console.WriteLine("Please provide the folder path as a command-line argument.");
+			Log("Please provide the folder path as a command-line argument.");
             return;
         }
 
@@ -24,7 +25,11 @@ class Program
         {
             // Initialize log file
             logWriter = new StreamWriter(logFilePath, append: false);
-            logWriter.WriteLine($"Log started at {DateTime.Now}");
+            logWriter.WriteLine($"Json Compiler Starting...");
+
+            // Set up logging to both console and file
+            var multiWriter = new MultiTextWriter(Console.Out, logWriter);
+            Console.SetOut(multiWriter);
 
             // Process folders and files
             List<JObject> dtblObjects = new List<JObject>();
@@ -64,7 +69,8 @@ class Program
             string outputPath = Path.Combine(exeDirectory, "output.json");
 
             File.WriteAllText(outputPath, JsonConvert.SerializeObject(outputJson, Formatting.Indented));
-            Log($"All JSON objects have been written to {outputPath}");
+            Log($"Asset path successfully converted into a JSON");
+            Log($"Output Location: {outputPath}");
         }
         catch (Exception ex)
         {
@@ -73,7 +79,7 @@ class Program
         finally
         {
             // Close log file
-            logWriter?.WriteLine($"Log ended at {DateTime.Now}");
+            logWriter?.WriteLine($"Conversion ended at: {DateTime.Now}");
             logWriter?.Close();
         }
     }
@@ -122,8 +128,7 @@ class Program
 
     static void Log(string message)
     {
-        Console.WriteLine(message);
-        logWriter?.WriteLine($"{DateTime.Now}: {message}");
+        Console.WriteLine(message); // This will now write to both Console and log file
     }
 
     static void ProcessDtblFile(string filePath, string rootFolder, List<JObject> dtblObjects)
@@ -134,17 +139,17 @@ class Program
             string modifiedPath = Path.ChangeExtension(relativePath, ".rpak");
 
             JObject newJsonObject = new JObject
-        {
-            { "_type", "dtbl" },
-            { "_path", modifiedPath }
-        };
+	        {
+	            { "_type", "dtbl" },
+	            { "_path", modifiedPath }
+	        };
 
             dtblObjects.Add(newJsonObject);
-            Console.WriteLine($"Processed a datatable! Path: {modifiedPath}");
+            Log($"Processed a datatable! Path: {modifiedPath}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error processing datatable: " + ex.Message);
+            Log("Error processing datatable: " + ex.Message);
         }
     }
 
@@ -162,11 +167,11 @@ class Program
             };
 
             matlObjects.Add(newJsonObject);
-            Console.WriteLine($"Processed a material JSON! Path: {modifiedPath}");
+            Log($"Processed a material JSON! Path: {modifiedPath}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error processing material JSON file: " + ex.Message);
+            Log("Error processing material JSON file: " + ex.Message);
         }
     }
 
@@ -186,11 +191,11 @@ class Program
             };
 
             assetObjects.Add(newJsonObject);
-            Console.WriteLine($"Processed a texture with the asset type {assetType}. Path: {modifiedPath}");
+            Log($"Processed a texture with the asset type {assetType}. Path: {modifiedPath}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error processing {assetType} file: " + ex.Message);
+            Log($"Error processing {assetType} file: " + ex.Message);
         }
     }
 
@@ -221,20 +226,20 @@ class Program
                 { "_path", relativePath }
             };
 
-            Console.WriteLine($"Processed an animation RIG! Path: {relativePath}");
+            Log($"Processed an animation RIG! Path: {relativePath}");
 
 
             string rsonPath = Path.ChangeExtension(filePath, ".rson");
             if (File.Exists(rsonPath))
             {
-                Console.WriteLine($"Found RSON configuration for the animation RIG: {rsonPath}");
+                Log($"Found RSON configuration for the animation RIG: {rsonPath}");
                 var rsonData = File.ReadAllLines(rsonPath);
                 List<string> sequences = ExtractSection(rsonData, "seqs");
 
                 if (sequences.Count > 0)
                 {
                     newJsonObject.Add("$sequences", JArray.FromObject(sequences));
-                    Console.WriteLine($"Extracted animation sequences: {string.Join(", ", sequences)}");
+                    Log($"Extracted animation sequences: {string.Join(", ", sequences)}");
                 }
             }
 
@@ -242,7 +247,7 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error processing RRIG file: " + ex.Message);
+            Log("Error processing RRIG file: " + ex.Message);
         }
     }
 
@@ -258,12 +263,12 @@ class Program
             { "_path", relativePath }
         };
 
-            Console.WriteLine($"Processed a RMDL! Path: {relativePath}");
+            Log($"Processed a RMDL! Path: {relativePath}");
 
             string rsonPath = Path.ChangeExtension(filePath, ".rson");
             if (File.Exists(rsonPath))
             {
-                Console.WriteLine($"Found RSON configuration for the RMDL: {relativePath}");
+                Log($"Found RSON configuration for the RMDL: {relativePath}");
                 var rsonData = File.ReadAllLines(rsonPath);
                 List<string> animrigs = ExtractSection(rsonData, "rigs");
                 List<string> sequences = ExtractSection(rsonData, "seqs");
@@ -271,18 +276,18 @@ class Program
                 if (animrigs.Count > 0)
                 {
                     newJsonObject.Add("$animrigs", JArray.FromObject(animrigs));
-                    Console.WriteLine($"Extracted animation RIGs: {string.Join(", ", animrigs)}");
+                    Log($"Extracted animation RIGs: {string.Join(", ", animrigs)}");
                 }
 
                 if (sequences.Count > 0)
                 {
                     newJsonObject.Add("$sequences", JArray.FromObject(sequences));
-                    Console.WriteLine($"Extracted animation sequences: {string.Join(", ", sequences)}");
+                    Log($"Extracted animation sequences: {string.Join(", ", sequences)}");
                 }
 
                 if (sequences.Count == 0 && animrigs.Count == 0)
                 {
-                    Console.WriteLine($"RSON file is empty: {rsonPath}.");
+                    Log($"RSON file is empty: {rsonPath}.");
                 }
             }
 
@@ -290,7 +295,7 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error processing RMDL file: " + ex.Message);
+            Log("Error processing RMDL file: " + ex.Message);
         }
     }
 
@@ -336,4 +341,25 @@ class Program
         }
         return SortPriorities.Length;
     }
+}
+
+// Custom TextWriter that writes to both the console and the log file
+public class MultiTextWriter : TextWriter
+{
+    private readonly TextWriter _consoleWriter;
+    private readonly TextWriter _fileWriter;
+
+    public MultiTextWriter(TextWriter consoleWriter, TextWriter fileWriter)
+    {
+        _consoleWriter = consoleWriter;
+        _fileWriter = fileWriter;
+    }
+
+    public override void WriteLine(string? value)  // Match the base method's nullability
+    {
+        _consoleWriter.WriteLine(value); // Write to console
+        _fileWriter.WriteLine(value);    // Write to log file
+    }
+
+    public override Encoding Encoding => _consoleWriter.Encoding;
 }
