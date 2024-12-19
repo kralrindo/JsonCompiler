@@ -1,13 +1,13 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 class Program
 {
-    // Sort priorities
     static readonly string[] SortPriorities = { "shadow", "prepass", "vsm", "tightshadow", "colpass" };
+    static StreamWriter? logWriter;
 
     static void Main(string[] args)
     {
@@ -18,52 +18,71 @@ class Program
         }
 
         string folderPath = args[0];
+        string logFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log.txt");
 
-        List<JObject> dtblObjects = new List<JObject>();
-        List<JObject> shdsObjects = new List<JObject>();
-        List<JObject> txtrObjects = new List<JObject>();
-        List<JObject> matlObjects = new List<JObject>();
-        List<JObject> rrigObjects = new List<JObject>();
-        List<JObject> rmdlObjects = new List<JObject>();
-
-        ProcessFolder(folderPath, folderPath, dtblObjects, shdsObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
-
-        // Sort matlObjects before adding them to the final output
-        SortMatlObjects(matlObjects);
-
-        List<JObject> allObjects = new List<JObject>();
-        allObjects.AddRange(dtblObjects);
-        allObjects.AddRange(shdsObjects);
-        allObjects.AddRange(txtrObjects);
-        allObjects.AddRange(matlObjects);
-        allObjects.AddRange(rrigObjects);
-        allObjects.AddRange(rmdlObjects);
-
-        JObject outputJson = new JObject
+        try
         {
-            { "version", 8 },
-            { "name", "output" },
-            { "streamFileMandatory", "paks/Win64/output.starpak" },
-            { "streamFileOptional", "paks/Win64/output.opt.starpak" },
-            { "assetsDir", "./assets/" },
-            { "outputDir", "./build/" },
-            { "compressLevel", 19 },
-            { "compressWorkers", 16 },
-            { "files", JArray.FromObject(allObjects) }
-        };
+            // Initialize log file
+            logWriter = new StreamWriter(logFilePath, append: false);
+            logWriter.WriteLine($"Log started at {DateTime.Now}");
 
-        string exeDirectory = AppDomain.CurrentDomain.BaseDirectory;
-        string outputPath = Path.Combine(exeDirectory, "output.json");
+            // Process folders and files
+            List<JObject> dtblObjects = new List<JObject>();
+            List<JObject> shdsObjects = new List<JObject>();
+            List<JObject> txtrObjects = new List<JObject>();
+            List<JObject> matlObjects = new List<JObject>();
+            List<JObject> rrigObjects = new List<JObject>();
+            List<JObject> rmdlObjects = new List<JObject>();
 
-        File.WriteAllText(outputPath, JsonConvert.SerializeObject(outputJson, Formatting.Indented));
-        Console.WriteLine($"All JSON objects have been written to {outputPath}");
+            ProcessFolder(folderPath, folderPath, dtblObjects, shdsObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
+
+            // Sort and write output JSON
+            SortMatlObjects(matlObjects);
+
+            List<JObject> allObjects = new List<JObject>();
+            allObjects.AddRange(dtblObjects);
+            allObjects.AddRange(shdsObjects);
+            allObjects.AddRange(txtrObjects);
+            allObjects.AddRange(matlObjects);
+            allObjects.AddRange(rrigObjects);
+            allObjects.AddRange(rmdlObjects);
+
+            JObject outputJson = new JObject
+            {
+                { "version", 8 },
+                { "name", "output" },
+                { "streamFileMandatory", "paks/Win64/output.starpak" },
+                { "streamFileOptional", "paks/Win64/output.opt.starpak" },
+                { "assetsDir", "./assets/" },
+                { "outputDir", "./build/" },
+                { "compressLevel", 19 },
+                { "compressWorkers", 16 },
+                { "files", JArray.FromObject(allObjects) }
+            };
+
+            string exeDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string outputPath = Path.Combine(exeDirectory, "output.json");
+
+            File.WriteAllText(outputPath, JsonConvert.SerializeObject(outputJson, Formatting.Indented));
+            Log($"All JSON objects have been written to {outputPath}");
+        }
+        catch (Exception ex)
+        {
+            Log($"Error: {ex.Message}");
+        }
+        finally
+        {
+            // Close log file
+            logWriter?.WriteLine($"Log ended at {DateTime.Now}");
+            logWriter?.Close();
+        }
     }
 
     static void ProcessFolder(string folderPath, string rootFolder, List<JObject> dtblObjects, List<JObject> shdsObjects, List<JObject> txtrObjects, List<JObject> matlObjects, List<JObject> rrigObjects, List<JObject> rmdlObjects)
     {
         if (!Directory.Exists(folderPath))
         {
-            Console.WriteLine("Directory not found: " + folderPath);
+            Log($"Directory not found: {folderPath}");
             return;
         }
 
@@ -101,6 +120,12 @@ class Program
         }
     }
 
+    static void Log(string message)
+    {
+        Console.WriteLine(message);
+        logWriter?.WriteLine($"{DateTime.Now}: {message}");
+    }
+
     static void ProcessDtblFile(string filePath, string rootFolder, List<JObject> dtblObjects)
     {
         try
@@ -109,16 +134,17 @@ class Program
             string modifiedPath = Path.ChangeExtension(relativePath, ".rpak");
 
             JObject newJsonObject = new JObject
-            {
-                { "_type", "dtbl" },
-                { "_path", modifiedPath }
-            };
+        {
+            { "_type", "dtbl" },
+            { "_path", modifiedPath }
+        };
 
             dtblObjects.Add(newJsonObject);
+            Console.WriteLine($"Processed a datatable! Path: {modifiedPath}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error processing DTBL file: " + ex.Message);
+            Console.WriteLine("Error processing datatable: " + ex.Message);
         }
     }
 
@@ -136,10 +162,11 @@ class Program
             };
 
             matlObjects.Add(newJsonObject);
+            Console.WriteLine($"Processed a material JSON! Path: {modifiedPath}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error processing JSON file: " + ex.Message);
+            Console.WriteLine("Error processing material JSON file: " + ex.Message);
         }
     }
 
@@ -159,6 +186,7 @@ class Program
             };
 
             assetObjects.Add(newJsonObject);
+            Console.WriteLine($"Processed a texture with the asset type {assetType}. Path: {modifiedPath}");
         }
         catch (Exception ex)
         {
@@ -193,15 +221,20 @@ class Program
                 { "_path", relativePath }
             };
 
+            Console.WriteLine($"Processed an animation RIG! Path: {relativePath}");
+
+
             string rsonPath = Path.ChangeExtension(filePath, ".rson");
             if (File.Exists(rsonPath))
             {
+                Console.WriteLine($"Found RSON configuration for the animation RIG: {rsonPath}");
                 var rsonData = File.ReadAllLines(rsonPath);
                 List<string> sequences = ExtractSection(rsonData, "seqs");
 
                 if (sequences.Count > 0)
                 {
                     newJsonObject.Add("$sequences", JArray.FromObject(sequences));
+                    Console.WriteLine($"Extracted animation sequences: {string.Join(", ", sequences)}");
                 }
             }
 
@@ -220,14 +253,17 @@ class Program
             string relativePath = Path.GetRelativePath(rootFolder, filePath).Replace("\\", "/");
 
             JObject newJsonObject = new JObject
-            {
-                { "_type", "mdl_" },
-                { "_path", relativePath }
-            };
+        {
+            { "_type", "mdl_" },
+            { "_path", relativePath }
+        };
+
+            Console.WriteLine($"Processed a RMDL! Path: {relativePath}");
 
             string rsonPath = Path.ChangeExtension(filePath, ".rson");
             if (File.Exists(rsonPath))
             {
+                Console.WriteLine($"Found RSON configuration for the RMDL: {relativePath}");
                 var rsonData = File.ReadAllLines(rsonPath);
                 List<string> animrigs = ExtractSection(rsonData, "rigs");
                 List<string> sequences = ExtractSection(rsonData, "seqs");
@@ -235,11 +271,18 @@ class Program
                 if (animrigs.Count > 0)
                 {
                     newJsonObject.Add("$animrigs", JArray.FromObject(animrigs));
+                    Console.WriteLine($"Extracted animation RIGs: {string.Join(", ", animrigs)}");
                 }
 
                 if (sequences.Count > 0)
                 {
                     newJsonObject.Add("$sequences", JArray.FromObject(sequences));
+                    Console.WriteLine($"Extracted animation sequences: {string.Join(", ", sequences)}");
+                }
+
+                if (sequences.Count == 0 && animrigs.Count == 0)
+                {
+                    Console.WriteLine($"RSON file is empty: {rsonPath}.");
                 }
             }
 
