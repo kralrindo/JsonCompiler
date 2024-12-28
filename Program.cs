@@ -32,6 +32,7 @@ class Program
             Console.SetOut(multiWriter);
 
             // Process folders and files
+            List<JObject> stltObjects = new List<JObject>(); // Stlayoout files (.stlt)
             List<JObject> stgsObjects = new List<JObject>(); // Settings files (.stgs)
             List<JObject> dtblObjects = new List<JObject>(); // Datatable files (.csv)
             List<JObject> shdsObjects = new List<JObject>(); // Shaderset files (.msw)
@@ -40,12 +41,13 @@ class Program
             List<JObject> rrigObjects = new List<JObject>(); // Animation rigs (.rrig)
             List<JObject> rmdlObjects = new List<JObject>(); // 3D model files (.rmdl)
 
-            ProcessFolder(folderPath, folderPath, stgsObjects, dtblObjects, shdsObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
+            ProcessFolder(folderPath, folderPath, stltObjects, stgsObjects, dtblObjects, shdsObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
 
             // Sort and write output JSON
             SortMatlObjects(matlObjects);
 
             List<JObject> allObjects = new List<JObject>();
+            allObjects.AddRange(stltObjects);
             allObjects.AddRange(stgsObjects);
             allObjects.AddRange(dtblObjects);
             allObjects.AddRange(shdsObjects);
@@ -87,7 +89,7 @@ class Program
         }
     }
 
-    static void ProcessFolder(string folderPath, string rootFolder, List<JObject> stgsObjects, List<JObject> dtblObjects, List<JObject> shdsObjects, List<JObject> txtrObjects, List<JObject> matlObjects, List<JObject> rrigObjects, List<JObject> rmdlObjects)
+    static void ProcessFolder(string folderPath, string rootFolder, List<JObject> stltObjects, List<JObject> stgsObjects, List<JObject> dtblObjects, List<JObject> shdsObjects, List<JObject> txtrObjects, List<JObject> matlObjects, List<JObject> rrigObjects, List<JObject> rmdlObjects)
     {
         if (!Directory.Exists(folderPath))
         {
@@ -97,7 +99,11 @@ class Program
 
         foreach (var file in Directory.GetFiles(folderPath))
         {
-            if (file.EndsWith(".set", StringComparison.OrdinalIgnoreCase))
+            if (file.EndsWith(".setl", StringComparison.OrdinalIgnoreCase))
+            {
+                //ProcessStltFile(file, rootFolder, stltObjects); //disable temporary, repak doesn't support it yet
+            }
+            else if (file.EndsWith(".set", StringComparison.OrdinalIgnoreCase))
             {
                 //ProcessStgsFile(file, rootFolder, stgsObjects); //disable temporary, repak doesn't support it yet
             }
@@ -129,7 +135,7 @@ class Program
 
         foreach (var subFolder in Directory.GetDirectories(folderPath))
         {
-            ProcessFolder(subFolder, rootFolder, stgsObjects, dtblObjects, shdsObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
+            ProcessFolder(subFolder, rootFolder, stltObjects, stgsObjects, dtblObjects, shdsObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
         }
     }
 
@@ -138,27 +144,28 @@ class Program
         Console.WriteLine(message); // This will now write to both Console and log file
     }
 
-    static void ProcessDtblFile(string filePath, string rootFolder, List<JObject> dtblObjects)
+
+    static void ProcessStltFile(string filePath, string rootFolder, List<JObject> dtblObjects)
     {
         try
         {
-            string relativePath = Path.GetRelativePath(rootFolder, filePath) // Remove dtbl folder from the path, rsx exports datatable folder as "dtbl" but game uses "datatable"
+            string relativePath = Path.GetRelativePath(rootFolder, filePath) // Remove stlt folder from the path, rsx cant export stlt yet but i'm guessing this is what it's gonna use
                           .Replace("\\", "/")
-                          .Replace("dtbl/", "");
+                          .Replace("stlt/", "");
             string modifiedPath = Path.ChangeExtension(relativePath, ".rpak");
 
             JObject newJsonObject = new JObject
-	        {
-	            { "_type", "dtbl" },
-	            { "_path", modifiedPath }
-	        };
+            {
+                { "_type", "stlt" },
+                { "_path", modifiedPath }
+            };
 
             dtblObjects.Add(newJsonObject);
-            Log($"Processed a datatable! Path: {modifiedPath}");
+            Log($"Processed a setting layout asset! Path: {modifiedPath}");
         }
         catch (Exception ex)
         {
-            Log("Error processing datatable: " + ex.Message);
+            Log("Error processing stlt: " + ex.Message);
         }
     }
 
@@ -183,6 +190,30 @@ class Program
         catch (Exception ex)
         {
             Log("Error processing stgs: " + ex.Message);
+        }
+    }
+
+    static void ProcessDtblFile(string filePath, string rootFolder, List<JObject> dtblObjects)
+    {
+        try
+        {
+            string relativePath = Path.GetRelativePath(rootFolder, filePath) // Remove dtbl folder from the path, rsx exports datatable folder as "dtbl" but game uses "datatable"
+                          .Replace("\\", "/")
+                          .Replace("dtbl/", "");
+            string modifiedPath = Path.ChangeExtension(relativePath, ".rpak");
+
+            JObject newJsonObject = new JObject
+	        {
+	            { "_type", "dtbl" },
+	            { "_path", modifiedPath }
+	        };
+
+            dtblObjects.Add(newJsonObject);
+            Log($"Processed a datatable! Path: {modifiedPath}");
+        }
+        catch (Exception ex)
+        {
+            Log("Error processing datatable: " + ex.Message);
         }
     }
 
