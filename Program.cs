@@ -36,12 +36,13 @@ class Program
             List<JObject> stgsObjects = new List<JObject>(); // Settings files (.stgs)
             List<JObject> dtblObjects = new List<JObject>(); // Datatable files (.csv)
             List<JObject> shdsObjects = new List<JObject>(); // Shaderset files (.msw)
+            List<JObject> txanObjects = new List<JObject>(); // TXAN files      (.txan)
             List<JObject> txtrObjects = new List<JObject>(); // Texture files   (.dds)
             List<JObject> matlObjects = new List<JObject>(); // Material files (.json)
             List<JObject> rrigObjects = new List<JObject>(); // Animation rigs (.rrig)
             List<JObject> rmdlObjects = new List<JObject>(); // 3D model files (.rmdl)
 
-            ProcessFolder(folderPath, folderPath, stltObjects, stgsObjects, dtblObjects, shdsObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
+            ProcessFolder(folderPath, folderPath, stltObjects, stgsObjects, dtblObjects, shdsObjects, txanObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
 
             // Sort and write output JSON
             SortMatlObjects(matlObjects);
@@ -51,6 +52,7 @@ class Program
             allObjects.AddRange(stgsObjects);
             allObjects.AddRange(dtblObjects);
             allObjects.AddRange(shdsObjects);
+            allObjects.AddRange(txanObjects);
             allObjects.AddRange(txtrObjects);
             allObjects.AddRange(matlObjects);
             allObjects.AddRange(rrigObjects);
@@ -89,7 +91,7 @@ class Program
         }
     }
 
-    static void ProcessFolder(string folderPath, string rootFolder, List<JObject> stltObjects, List<JObject> stgsObjects, List<JObject> dtblObjects, List<JObject> shdsObjects, List<JObject> txtrObjects, List<JObject> matlObjects, List<JObject> rrigObjects, List<JObject> rmdlObjects)
+    static void ProcessFolder(string folderPath, string rootFolder, List<JObject> stltObjects, List<JObject> stgsObjects, List<JObject> dtblObjects, List<JObject> shdsObjects, List<JObject> txanObjects, List<JObject> txtrObjects, List<JObject> matlObjects, List<JObject> rrigObjects, List<JObject> rmdlObjects)
     {
         if (!Directory.Exists(folderPath))
         {
@@ -110,6 +112,10 @@ class Program
             else if (file.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
             {
                 ProcessDtblFile(file, rootFolder, dtblObjects);
+            }
+            else if (file.EndsWith(".txan", StringComparison.OrdinalIgnoreCase))
+            {
+                ProcessAssetFile(file, rootFolder, txanObjects, "txan", "txan");
             }
             else if (file.EndsWith(".msw", StringComparison.OrdinalIgnoreCase))
             {
@@ -135,7 +141,7 @@ class Program
 
         foreach (var subFolder in Directory.GetDirectories(folderPath))
         {
-            ProcessFolder(subFolder, rootFolder, stltObjects, stgsObjects, dtblObjects, shdsObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
+            ProcessFolder(subFolder, rootFolder, stltObjects, stgsObjects, dtblObjects, shdsObjects, txanObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
         }
     }
 
@@ -255,7 +261,7 @@ class Program
             };
 
             assetObjects.Add(newJsonObject);
-            Log($"Processed a texture with the asset type {assetType}. Path: {modifiedPath}");
+            Log($"Processed an asset with the asset type {assetType}. Path: {modifiedPath}");
         }
         catch (Exception ex)
         {
