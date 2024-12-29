@@ -33,14 +33,14 @@ class Program
 
             // Process folders and files
             List<JObject> stltObjects = new List<JObject>(); // Stlayoout files (.stlt)
-            List<JObject> stgsObjects = new List<JObject>(); // Settings files (.stgs)
+            List<JObject> stgsObjects = new List<JObject>(); // Settings files  (.stgs)
             List<JObject> dtblObjects = new List<JObject>(); // Datatable files (.csv)
             List<JObject> shdsObjects = new List<JObject>(); // Shaderset files (.msw)
             List<JObject> txanObjects = new List<JObject>(); // TXAN files      (.txan)
             List<JObject> txtrObjects = new List<JObject>(); // Texture files   (.dds)
-            List<JObject> matlObjects = new List<JObject>(); // Material files (.json)
-            List<JObject> rrigObjects = new List<JObject>(); // Animation rigs (.rrig)
-            List<JObject> rmdlObjects = new List<JObject>(); // 3D model files (.rmdl)
+            List<JObject> matlObjects = new List<JObject>(); // Material files  (.json)
+            List<JObject> rrigObjects = new List<JObject>(); // Animation rigs  (.rrig)
+            List<JObject> rmdlObjects = new List<JObject>(); // 3D model files  (.rmdl)
 
             ProcessFolder(folderPath, folderPath, stltObjects, stgsObjects, dtblObjects, shdsObjects, txanObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
 
@@ -115,7 +115,7 @@ class Program
             }
             else if (file.EndsWith(".txan", StringComparison.OrdinalIgnoreCase))
             {
-                ProcessAssetFile(file, rootFolder, txanObjects, "txan", "txan");
+                ProcessAssetFile(file, rootFolder, txanObjects, "txan", "texture_anim");
             }
             else if (file.EndsWith(".msw", StringComparison.OrdinalIgnoreCase))
             {
