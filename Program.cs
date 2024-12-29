@@ -166,7 +166,12 @@ class Program
             }
             else if (file.EndsWith(".msw", StringComparison.OrdinalIgnoreCase))
             {
-                ProcessAssetFile(file, rootFolder, shdsObjects, "shds", "shaderset");
+                if (folderPath.Contains("shaderset", StringComparison.OrdinalIgnoreCase))
+                    ProcessAssetFile(file, rootFolder, shdsObjects, "shds", "shaderset");
+                else if (folderPath.Contains("shader", StringComparison.OrdinalIgnoreCase))
+                    ProcessAssetFile(file, rootFolder, shdsObjects, "shdr", "shader");
+                else
+                    Console.Error.WriteLine($"Asset {file} is in unsupported folder!");
             }
             else if (file.EndsWith(".dds", StringComparison.OrdinalIgnoreCase))
             {
@@ -305,8 +310,9 @@ class Program
         {
             string relativePath = Path.GetRelativePath(rootFolder, filePath).Replace("\\", "/");
             string modifiedPath = $"{pathPrefix}/{Path.GetFileNameWithoutExtension(relativePath)}.rpak";
+            if (filePath.Contains("shader\\", StringComparison.OrdinalIgnoreCase))
+                modifiedPath = $"{pathPrefix}/{Path.GetFileNameWithoutExtension(relativePath)}";
             string guid = Path.GetFileNameWithoutExtension(filePath);
-
             JObject newJsonObject = new JObject
             {
                 { "_type", assetType },
