@@ -10,11 +10,14 @@ class Program
     static readonly string[] SortPriorities = { "shadow", "prepass", "vsm", "tightshadow", "colpass" };
     static StreamWriter? logWriter;
 
+    // The set to store database of filenames.
+    static HashSet<string> skipList = new HashSet<string>();
+
     static void Main(string[] args)
     {
         if (args.Length < 1)
         {
-			Log("Please provide the folder path as a command-line argument.");
+            Log("Please provide the folder path as a command-line argument.");
             return;
         }
 
@@ -23,6 +26,11 @@ class Program
 
         try
         {
+            // Load the database
+            string skipListFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "R5Reloaded_Asset_Database.db");
+
+            LoadSkipList(skipListFilePath);
+
             // Initialize log file
             logWriter = new StreamWriter(logFilePath, append: false);
             logWriter.WriteLine($"Json Compiler Starting...");
@@ -91,6 +99,35 @@ class Program
         }
     }
 
+    static void LoadSkipList(string skipListFilePath)
+    {
+        try
+        {
+            if (File.Exists(skipListFilePath))
+            {
+                var lines = File.ReadAllLines(skipListFilePath);
+                foreach (var line in lines)
+                {
+                    // Trim whitespace and add to skip list if not empty
+                    var trimmedLine = line.Trim();
+                    if (!string.IsNullOrEmpty(trimmedLine))
+                    {
+                        skipList.Add(trimmedLine);
+                    }
+                }
+                Log($"Found R5Reloaded Database!: {skipListFilePath}");
+            }
+            else
+            {
+                Log($"R5Reloaded Database not found: {skipListFilePath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"Error loading R5Reloaded Database: {ex.Message}");
+        }
+    }
+
     static void ProcessFolder(string folderPath, string rootFolder, List<JObject> stltObjects, List<JObject> stgsObjects, List<JObject> dtblObjects, List<JObject> shdsObjects, List<JObject> txanObjects, List<JObject> txtrObjects, List<JObject> matlObjects, List<JObject> rrigObjects, List<JObject> rmdlObjects)
     {
         if (!Directory.Exists(folderPath))
@@ -101,13 +138,23 @@ class Program
 
         foreach (var file in Directory.GetFiles(folderPath))
         {
+            string fileName = Path.GetFileName(file);
+
+            // Check if the file is in the database
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file).ToLowerInvariant(); // To make it case-insensitive and without extension
+            if (skipList.Contains(fileNameWithoutExtension, StringComparer.OrdinalIgnoreCase))
+            {
+                Log($"Found an asset that was already in R5Reloaded: {fileNameWithoutExtension}, skipping!"); // Log the skipped file name
+                continue; // Skip this file
+            }
+
             if (file.EndsWith(".setl", StringComparison.OrdinalIgnoreCase))
             {
-                //ProcessStltFile(file, rootFolder, stltObjects); //disable temporary, repak doesn't support it yet
+                // ProcessStltFile(file, rootFolder, stltObjects); // temporarily disabled
             }
             else if (file.EndsWith(".set", StringComparison.OrdinalIgnoreCase))
             {
-                //ProcessStgsFile(file, rootFolder, stgsObjects); //disable temporary, repak doesn't support it yet
+                // ProcessStgsFile(file, rootFolder, stgsObjects); // temporarily disabled
             }
             else if (file.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
             {
@@ -229,6 +276,13 @@ class Program
         {
             string relativePath = Path.GetRelativePath(rootFolder, filePath).Replace("\\", "/");
             string modifiedPath = Path.ChangeExtension(relativePath, ".rpak");
+            string databasepath = Path.ChangeExtension(Path.GetRelativePath(rootFolder, filePath), ".rpak");
+
+            if (skipList.Contains(databasepath, StringComparer.OrdinalIgnoreCase))
+            {
+                Log($"Found an asset that was already in R5Reloaded: {databasepath}, skipping!");
+                return; // Skip this file
+            }
 
             JObject newJsonObject = new JObject
             {
@@ -326,7 +380,13 @@ class Program
         try
         {
             string relativePath = Path.GetRelativePath(rootFolder, filePath).Replace("\\", "/");
+            string databasepath = Path.GetRelativePath(rootFolder, filePath);
 
+            if (skipList.Contains(databasepath, StringComparer.OrdinalIgnoreCase))
+            {
+                Log($"Found an asset that was already in R5Reloaded: {databasepath}, skipping!");
+                return; // Skip this file
+            }
             JObject newJsonObject = new JObject
         {
             { "_type", "mdl_" },
