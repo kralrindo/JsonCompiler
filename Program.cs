@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 class Program
 {
-    static readonly string[] SortPriorities = { "shadow", "prepass", "vsm", "tightshadow", "colpass" };
+    static readonly string[] SortPriorities = { "_shadow_", "_prepass_", "_vsm_", "_tightshadow_", "_colpass_" };
     static StreamWriter? logWriter;
 
     // The set to store database of filenames.
