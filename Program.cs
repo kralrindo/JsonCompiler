@@ -279,6 +279,13 @@ class Program
     {
         try
         {
+            // Check if the file path contains the word "material" (case-insensitive)
+            if (!filePath.Contains("material", StringComparison.OrdinalIgnoreCase))
+            {
+                Log($"Skipping JSON file: {filePath} because it's not a material json'.");
+                return;
+            }
+
             string relativePath = Path.GetRelativePath(rootFolder, filePath).Replace("\\", "/");
             string modifiedPath = Path.ChangeExtension(relativePath, ".rpak");
             string databasepath = Path.ChangeExtension(Path.GetRelativePath(rootFolder, filePath), ".rpak");
