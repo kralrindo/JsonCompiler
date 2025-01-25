@@ -148,17 +148,14 @@ class Program
                 continue; // Skip this file
             }
 
-            if (file.EndsWith(".setl", StringComparison.OrdinalIgnoreCase))
-            {
-                // ProcessStltFile(file, rootFolder, stltObjects); // temporarily disabled
-            }
-            else if (file.EndsWith(".set", StringComparison.OrdinalIgnoreCase))
+            if (file.EndsWith(".set", StringComparison.OrdinalIgnoreCase))
             {
                 // ProcessStgsFile(file, rootFolder, stgsObjects); // temporarily disabled
             }
             else if (file.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
             {
-                ProcessDtblFile(file, rootFolder, dtblObjects);
+                if (folderPath.Contains("datatable", StringComparison.OrdinalIgnoreCase))
+                    ProcessDtblFile(file, rootFolder, dtblObjects);
             }
             else if (file.EndsWith(".txan", StringComparison.OrdinalIgnoreCase))
             {
@@ -179,7 +176,10 @@ class Program
             }
             else if (file.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
-                ProcessJsonFile(file, rootFolder, matlObjects, "matl");
+                if (folderPath.Contains("settings_layout", StringComparison.OrdinalIgnoreCase))
+                    ProcessStltFile(file, rootFolder, stltObjects);
+                else
+                    ProcessJsonFile(file, rootFolder, matlObjects, "matl");
             }
             else if (file.EndsWith(".rrig", StringComparison.OrdinalIgnoreCase))
             {
@@ -203,7 +203,7 @@ class Program
     }
 
 
-    static void ProcessStltFile(string filePath, string rootFolder, List<JObject> dtblObjects)
+    static void ProcessStltFile(string filePath, string rootFolder, List<JObject> stltObjects)
     {
         try
         {
@@ -218,8 +218,8 @@ class Program
                 { "_path", modifiedPath }
             };
 
-            dtblObjects.Add(newJsonObject);
-            Log($"Processed a setting layout asset! Path: {modifiedPath}");
+            stltObjects.Add(newJsonObject);
+            Log($"Processed a settings layout asset! Path: {modifiedPath}");
         }
         catch (Exception ex)
         {
@@ -317,8 +317,7 @@ class Program
         {
             string relativePath = Path.GetRelativePath(rootFolder, filePath).Replace("\\", "/");
             string modifiedPath = $"{pathPrefix}/{Path.GetFileNameWithoutExtension(relativePath)}.rpak";
-            if (filePath.Contains("shader\\", StringComparison.OrdinalIgnoreCase))
-                modifiedPath = $"{pathPrefix}/{Path.GetFileNameWithoutExtension(relativePath)}";
+                
             string guid = Path.GetFileNameWithoutExtension(filePath);
             JObject newJsonObject = new JObject
             {
