@@ -138,13 +138,18 @@ class Program
 
         foreach (var file in Directory.GetFiles(folderPath))
         {
-            string fileName = Path.GetFileName(file);
+            string fileName = Path.GetFileName(file).Replace("\\", "/");
 
             // Check if the file is in the database
-            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file).ToLowerInvariant(); // To make it case-insensitive and without extension
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file).ToLowerInvariant().Replace("\\", "/"); // To make it case-insensitive and without extension
             if (skipList.Contains(fileNameWithoutExtension, StringComparer.OrdinalIgnoreCase))
             {
                 Log($"Found an asset that was already in R5Reloaded: {fileNameWithoutExtension}, skipping!"); // Log the skipped file name
+                continue; // Skip this file
+            }
+            else if (skipList.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+            {
+                Log($"Found an asset that was already in R5Reloaded: {fileName}, skipping!"); // Log the skipped file name
                 continue; // Skip this file
             }
 
