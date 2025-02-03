@@ -139,6 +139,7 @@ class Program
         foreach (var file in Directory.GetFiles(folderPath))
         {
             string fileName = Path.GetFileName(file).Replace("\\", "/");
+            string stgspath = folderPath.Replace("\\", "/");
 
             // Check if the file is in the database
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file).ToLowerInvariant().Replace("\\", "/"); // To make it case-insensitive and without extension
@@ -151,11 +152,6 @@ class Program
             {
                 Log($"Found an asset that was already in R5Reloaded: {fileName}, skipping!"); // Log the skipped file name
                 continue; // Skip this file
-            }
-
-            if (file.EndsWith(".set", StringComparison.OrdinalIgnoreCase))
-            {
-                // ProcessStgsFile(file, rootFolder, stgsObjects); // temporarily disabled
             }
             else if (file.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
             {
@@ -183,6 +179,8 @@ class Program
             {
                 if (folderPath.Contains("settings_layout", StringComparison.OrdinalIgnoreCase))
                     ProcessStltFile(file, rootFolder, stltObjects);
+                if (stgspath.Contains("settings/", StringComparison.OrdinalIgnoreCase))
+                    ProcessStgsFile(file, rootFolder, stgsObjects); // temporarily disabled
                 else
                     ProcessJsonFile(file, rootFolder, matlObjects, "matl");
             }
@@ -287,7 +285,6 @@ class Program
             // Check if the file path contains the word "material" (case-insensitive)
             if (!filePath.Contains("material", StringComparison.OrdinalIgnoreCase))
             {
-                Log($"Skipping JSON file: {filePath} because it's not a material json'.");
                 return;
             }
 
