@@ -47,10 +47,11 @@ class Program
             List<JObject> txanObjects = new List<JObject>(); // TXAN files      (.txan)
             List<JObject> txtrObjects = new List<JObject>(); // Texture files   (.dds)
             List<JObject> matlObjects = new List<JObject>(); // Material files  (.json)
+            List<JObject> rseqObjects = new List<JObject>(); // Animation seqs  (.rseq)
             List<JObject> rrigObjects = new List<JObject>(); // Animation rigs  (.rrig)
             List<JObject> rmdlObjects = new List<JObject>(); // 3D model files  (.rmdl)
 
-            ProcessFolder(folderPath, folderPath, stltObjects, stgsObjects, dtblObjects, shdsObjects, txanObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
+            ProcessFolder(folderPath, folderPath, stltObjects, stgsObjects, dtblObjects, shdsObjects, txanObjects, txtrObjects, matlObjects, rseqObjects, rrigObjects, rmdlObjects);
 
             // Sort and write output JSON
             SortMatlObjects(matlObjects);
@@ -63,6 +64,7 @@ class Program
             allObjects.AddRange(txanObjects);
             allObjects.AddRange(txtrObjects);
             allObjects.AddRange(matlObjects);
+            allObjects.AddRange(rseqObjects);
             allObjects.AddRange(rrigObjects);
             allObjects.AddRange(rmdlObjects);
 
@@ -75,7 +77,7 @@ class Program
                 { "streamFileOptional", "paks/Win64/output.opt.starpak" },
                 { "assetsDir", "./assets/" },
                 { "outputDir", "./build/" },
-                { "compressLevel", 19 },
+                { "compressLevel", 12 },
                 { "compressWorkers", 16 },
                 { "files", JArray.FromObject(allObjects) }
             };
@@ -128,7 +130,7 @@ class Program
         }
     }
 
-    static void ProcessFolder(string folderPath, string rootFolder, List<JObject> stltObjects, List<JObject> stgsObjects, List<JObject> dtblObjects, List<JObject> shdsObjects, List<JObject> txanObjects, List<JObject> txtrObjects, List<JObject> matlObjects, List<JObject> rrigObjects, List<JObject> rmdlObjects)
+    static void ProcessFolder(string folderPath, string rootFolder, List<JObject> stltObjects, List<JObject> stgsObjects, List<JObject> dtblObjects, List<JObject> shdsObjects, List<JObject> txanObjects, List<JObject> txtrObjects, List<JObject> matlObjects, List<JObject> rseqObjects, List<JObject> rrigObjects, List<JObject> rmdlObjects)
     {
         if (!Directory.Exists(folderPath))
         {
@@ -162,6 +164,10 @@ class Program
             {
                 ProcessAssetFile(file, rootFolder, txanObjects, "txan", "texture_anim");
             }
+            else if (file.EndsWith(".rseq", StringComparison.OrdinalIgnoreCase))
+            {
+                ProcessAseqFile(file, rootFolder, dtblObjects);
+            }
             else if (file.EndsWith(".msw", StringComparison.OrdinalIgnoreCase))
             {
                 if (folderPath.Contains("shaderset", StringComparison.OrdinalIgnoreCase))
@@ -180,7 +186,7 @@ class Program
                 if (folderPath.Contains("settings_layout", StringComparison.OrdinalIgnoreCase))
                     ProcessStltFile(file, rootFolder, stltObjects);
                 if (stgspath.Contains("settings/", StringComparison.OrdinalIgnoreCase))
-                    ProcessStgsFile(file, rootFolder, stgsObjects); // temporarily disabled
+                    ProcessStgsFile(file, rootFolder, stgsObjects);
                 else
                     ProcessJsonFile(file, rootFolder, matlObjects, "matl");
             }
@@ -196,7 +202,7 @@ class Program
 
         foreach (var subFolder in Directory.GetDirectories(folderPath))
         {
-            ProcessFolder(subFolder, rootFolder, stltObjects, stgsObjects, dtblObjects, shdsObjects, txanObjects, txtrObjects, matlObjects, rrigObjects, rmdlObjects);
+            ProcessFolder(subFolder, rootFolder, stltObjects, stgsObjects, dtblObjects, shdsObjects, txanObjects, txtrObjects, matlObjects, rseqObjects, rrigObjects, rmdlObjects);
         }
     }
 
@@ -275,6 +281,30 @@ class Program
         catch (Exception ex)
         {
             Log("Error processing datatable: " + ex.Message);
+        }
+    }
+
+    static void ProcessAseqFile(string filePath, string rootFolder, List<JObject> dtblObjects)
+    {
+        try
+        {
+            string relativePath = Path.GetRelativePath(rootFolder, filePath) // Remove dtbl folder from the path, rsx exports datatable folder as "dtbl" but game uses "datatable"
+                          .Replace("\\", "/");
+                          //.Replace("dtbl/", "")
+            string modifiedPath = Path.ChangeExtension(relativePath, ".rseq");
+
+            JObject newJsonObject = new JObject
+            {
+                { "_type", "aseq" },
+                { "_path", modifiedPath }
+            };
+
+            dtblObjects.Add(newJsonObject);
+            Log($"Processed a sequence! Path: {modifiedPath}");
+        }
+        catch (Exception ex)
+        {
+            Log("Error processing sequence: " + ex.Message);
         }
     }
 
