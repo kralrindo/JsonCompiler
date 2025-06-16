@@ -166,7 +166,8 @@ class Program
             }
             else if (file.EndsWith(".rseq", StringComparison.OrdinalIgnoreCase))
             {
-                ProcessAseqFile(file, rootFolder, dtblObjects);
+                // ProcessAseqFile(file, rootFolder, dtblObjects);
+                continue; // Skip this file
             }
             else if (file.EndsWith(".msw", StringComparison.OrdinalIgnoreCase))
             {
