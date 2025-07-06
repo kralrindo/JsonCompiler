@@ -188,7 +188,9 @@ class Program
                     ProcessStltFile(file, rootFolder, stltObjects);
                 if (stgspath.Contains("settings/", StringComparison.OrdinalIgnoreCase))
                     ProcessStgsFile(file, rootFolder, stgsObjects);
-                else
+                if (folderPath.Contains("texture_list", StringComparison.OrdinalIgnoreCase))
+                    ProcessJsonFile(file, rootFolder, matlObjects, "txls");
+                else if (folderPath.Contains("material", StringComparison.OrdinalIgnoreCase))
                     ProcessJsonFile(file, rootFolder, matlObjects, "matl");
             }
             else if (file.EndsWith(".rrig", StringComparison.OrdinalIgnoreCase))
@@ -313,12 +315,6 @@ class Program
     {
         try
         {
-            // Check if the file path contains the word "material" (case-insensitive)
-            if (!filePath.Contains("material", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
             string relativePath = Path.GetRelativePath(rootFolder, filePath).Replace("\\", "/");
             string modifiedPath = Path.ChangeExtension(relativePath, ".rpak");
             string databasepath = Path.ChangeExtension(Path.GetRelativePath(rootFolder, filePath), ".rpak");
@@ -336,11 +332,19 @@ class Program
             };
 
             matlObjects.Add(newJsonObject);
-            Log($"Processed a material JSON! Path: {modifiedPath}");
+
+            if (filePath.Contains("texture_list", StringComparison.OrdinalIgnoreCase))
+            {
+                Log($"Processed a Texture List asset JSON! Path: {modifiedPath}");
+            }
+            else if (filePath.Contains("material", StringComparison.OrdinalIgnoreCase))
+            {
+                Log($"Processed a Material JSON! Path: {modifiedPath}");
+            }
         }
         catch (Exception ex)
         {
-            Log("Error processing material JSON file: " + ex.Message);
+            Log("Error processing JSON file: " + ex.Message);
         }
     }
 
@@ -349,15 +353,34 @@ class Program
         try
         {
             string relativePath = Path.GetRelativePath(rootFolder, filePath).Replace("\\", "/");
-            string modifiedPath = $"{pathPrefix}/{Path.GetFileNameWithoutExtension(relativePath)}.rpak";
-                
             string guid = Path.GetFileNameWithoutExtension(filePath);
+
+            string modifiedPath;
+
+            if (guid.StartsWith("0x"))
+            {
+                modifiedPath = $"{pathPrefix}/{guid}.rpak";
+            }
+            else
+            {
+                string pathWithoutExtension = Path.Combine(
+                    Path.GetDirectoryName(relativePath) ?? "",
+                    Path.GetFileNameWithoutExtension(relativePath)
+                ).Replace("\\", "/");
+
+                modifiedPath = $"{pathPrefix}/{pathWithoutExtension}.rpak";
+            }
+
             JObject newJsonObject = new JObject
             {
                 { "_type", assetType },
-                { "_path", modifiedPath },
-                { "$guid", guid }
+                { "_path", modifiedPath }
             };
+
+            if (guid.StartsWith("0x"))
+            {
+                newJsonObject.Add("$guid", guid);
+            }
 
             assetObjects.Add(newJsonObject);
             Log($"Processed an asset with the asset type {assetType}. Path: {modifiedPath}");
