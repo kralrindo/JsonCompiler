@@ -77,7 +77,7 @@ class Program
                 { "streamFileOptional", "paks/Win64/output.opt.starpak" },
                 { "assetsDir", "./assets/" },
                 { "outputDir", "./build/" },
-                { "compressLevel", 12 },
+                { "compressLevel", 6 },
                 { "compressWorkers", 16 },
                 { "files", JArray.FromObject(allObjects) }
             };
@@ -158,7 +158,7 @@ class Program
             else if (file.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
             {
                 if (folderPath.Contains("datatable", StringComparison.OrdinalIgnoreCase))
-                    ProcessDtblFile(file, rootFolder, dtblObjects);
+                    ProcessAssetFile(file, rootFolder, txtrObjects, "dtbl", "datatable");
             }
             else if (file.EndsWith(".txan", StringComparison.OrdinalIgnoreCase))
             {
@@ -263,30 +263,6 @@ class Program
         }
     }
 
-    static void ProcessDtblFile(string filePath, string rootFolder, List<JObject> dtblObjects)
-    {
-        try
-        {
-            string relativePath = Path.GetRelativePath(rootFolder, filePath) // Remove dtbl folder from the path, rsx exports datatable folder as "dtbl" but game uses "datatable"
-                          .Replace("\\", "/")
-                          .Replace("dtbl/", "");
-            string modifiedPath = Path.ChangeExtension(relativePath, ".rpak");
-
-            JObject newJsonObject = new JObject
-	        {
-	            { "_type", "dtbl" },
-	            { "_path", modifiedPath }
-	        };
-
-            dtblObjects.Add(newJsonObject);
-            Log($"Processed a datatable! Path: {modifiedPath}");
-        }
-        catch (Exception ex)
-        {
-            Log("Error processing datatable: " + ex.Message);
-        }
-    }
-
     static void ProcessAseqFile(string filePath, string rootFolder, List<JObject> dtblObjects)
     {
         try
@@ -368,7 +344,15 @@ class Program
                     Path.GetFileNameWithoutExtension(relativePath)
                 ).Replace("\\", "/");
 
-                modifiedPath = $"{pathPrefix}/{pathWithoutExtension}.rpak";
+                // Prevent duplicating pathPrefix
+                if (pathWithoutExtension.StartsWith(pathPrefix + "/"))
+                {
+                    modifiedPath = $"{pathWithoutExtension}.rpak";
+                }
+                else
+                {
+                    modifiedPath = $"{pathPrefix}/{pathWithoutExtension}.rpak";
+                }
             }
 
             JObject newJsonObject = new JObject
