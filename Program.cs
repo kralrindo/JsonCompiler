@@ -190,8 +190,11 @@ class Program
                     ProcessStgsFile(file, rootFolder, stgsObjects);
                 if (folderPath.Contains("texture_list", StringComparison.OrdinalIgnoreCase))
                     ProcessJsonFile(file, rootFolder, matlObjects, "txls");
-                else if (folderPath.Contains("material", StringComparison.OrdinalIgnoreCase))
+                else if (folderPath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                   .Any(part => string.Equals(part, "material", StringComparison.OrdinalIgnoreCase)))
+                {
                     ProcessJsonFile(file, rootFolder, matlObjects, "matl");
+                }
             }
             else if (file.EndsWith(".rrig", StringComparison.OrdinalIgnoreCase))
             {
