@@ -40,6 +40,7 @@ class Program
             Console.SetOut(multiWriter);
 
             // Process folders and files
+            List<JObject> rmdlObjects = new List<JObject>(); // 3D model files  (.rmdl)
             List<JObject> stltObjects = new List<JObject>(); // Stlayoout files (.stlt)
             List<JObject> stgsObjects = new List<JObject>(); // Settings files  (.stgs)
             List<JObject> dtblObjects = new List<JObject>(); // Datatable files (.csv)
@@ -49,14 +50,14 @@ class Program
             List<JObject> matlObjects = new List<JObject>(); // Material files  (.json)
             List<JObject> rseqObjects = new List<JObject>(); // Animation seqs  (.rseq)
             List<JObject> rrigObjects = new List<JObject>(); // Animation rigs  (.rrig)
-            List<JObject> rmdlObjects = new List<JObject>(); // 3D model files  (.rmdl)
 
-            ProcessFolder(folderPath, folderPath, stltObjects, stgsObjects, dtblObjects, shdsObjects, txanObjects, txtrObjects, matlObjects, rseqObjects, rrigObjects, rmdlObjects);
+            ProcessFolder(folderPath, folderPath, rmdlObjects, stltObjects, stgsObjects, dtblObjects, shdsObjects, txanObjects, txtrObjects, matlObjects, rseqObjects, rrigObjects);
 
             // Sort and write output JSON
             SortMatlObjects(matlObjects);
 
             List<JObject> allObjects = new List<JObject>();
+            allObjects.AddRange(rmdlObjects);
             allObjects.AddRange(stltObjects);
             allObjects.AddRange(stgsObjects);
             allObjects.AddRange(dtblObjects);
@@ -66,7 +67,6 @@ class Program
             allObjects.AddRange(matlObjects);
             allObjects.AddRange(rseqObjects);
             allObjects.AddRange(rrigObjects);
-            allObjects.AddRange(rmdlObjects);
 
             JObject outputJson = new JObject
             {
@@ -130,7 +130,7 @@ class Program
         }
     }
 
-    static void ProcessFolder(string folderPath, string rootFolder, List<JObject> stltObjects, List<JObject> stgsObjects, List<JObject> dtblObjects, List<JObject> shdsObjects, List<JObject> txanObjects, List<JObject> txtrObjects, List<JObject> matlObjects, List<JObject> rseqObjects, List<JObject> rrigObjects, List<JObject> rmdlObjects)
+    static void ProcessFolder(string folderPath, string rootFolder, List<JObject> rmdlObjects, List<JObject> stltObjects, List<JObject> stgsObjects, List<JObject> dtblObjects, List<JObject> shdsObjects, List<JObject> txanObjects, List<JObject> txtrObjects, List<JObject> matlObjects, List<JObject> rseqObjects, List<JObject> rrigObjects)
     {
         if (!Directory.Exists(folderPath))
         {
@@ -208,7 +208,7 @@ class Program
 
         foreach (var subFolder in Directory.GetDirectories(folderPath))
         {
-            ProcessFolder(subFolder, rootFolder, stltObjects, stgsObjects, dtblObjects, shdsObjects, txanObjects, txtrObjects, matlObjects, rseqObjects, rrigObjects, rmdlObjects);
+            ProcessFolder(subFolder, rootFolder, rmdlObjects, stltObjects, stgsObjects, dtblObjects, shdsObjects, txanObjects, txtrObjects, matlObjects, rseqObjects, rrigObjects);
         }
     }
 
