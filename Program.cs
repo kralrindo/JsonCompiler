@@ -184,12 +184,15 @@ class Program
             }
             else if (file.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
-                if (folderPath.Contains("settings_layout", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(new DirectoryInfo(folderPath).Name, "settings_layout", StringComparison.OrdinalIgnoreCase))
                     ProcessStltFile(file, rootFolder, stltObjects);
+
                 if (stgspath.Contains("settings/", StringComparison.OrdinalIgnoreCase))
                     ProcessStgsFile(file, rootFolder, stgsObjects);
+
                 if (folderPath.Contains("texture_list", StringComparison.OrdinalIgnoreCase))
                     ProcessJsonFile(file, rootFolder, matlObjects, "txls");
+				
                 else if (folderPath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
                    .Any(part => string.Equals(part, "material", StringComparison.OrdinalIgnoreCase)))
                 {
