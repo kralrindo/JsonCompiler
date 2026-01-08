@@ -27,7 +27,7 @@ class Program
         try
         {
             // Load the database
-            string skipListFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "R5Reloaded_Asset_Database.db");
+            string skipListFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "R5Valkyrie_Asset_Database.db");
 
             LoadSkipList(skipListFilePath);
 
@@ -117,16 +117,16 @@ class Program
                         skipList.Add(trimmedLine);
                     }
                 }
-                Log($"Found R5Reloaded Database!: {skipListFilePath}");
+                Log($"Found R5Valkyrie Database!: {skipListFilePath}");
             }
             else
             {
-                Log($"R5Reloaded Database not found: {skipListFilePath}");
+                Log($"R5Valkyrie Database not found: {skipListFilePath}");
             }
         }
         catch (Exception ex)
         {
-            Log($"Error loading R5Reloaded Database: {ex.Message}");
+            Log($"Error loading R5Valkyrie Database: {ex.Message}");
         }
     }
 
@@ -147,12 +147,12 @@ class Program
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file).ToLowerInvariant().Replace("\\", "/"); // To make it case-insensitive and without extension
             if (skipList.Contains(fileNameWithoutExtension, StringComparer.OrdinalIgnoreCase))
             {
-                Log($"Found an asset that was already in R5Reloaded: {fileNameWithoutExtension}, skipping!"); // Log the skipped file name
+                Log($"Found an asset that was already in R5Valkyrie: {fileNameWithoutExtension}, skipping!"); // Log the skipped file name
                 continue; // Skip this file
             }
             else if (skipList.Contains(fileName, StringComparer.OrdinalIgnoreCase))
             {
-                Log($"Found an asset that was already in R5Reloaded: {fileName}, skipping!"); // Log the skipped file name
+                Log($"Found an asset that was already in R5Valkyrie: {fileName}, skipping!"); // Log the skipped file name
                 continue; // Skip this file
             }
             else if (file.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
@@ -303,7 +303,7 @@ class Program
 
             if (skipList.Contains(databasepath, StringComparer.OrdinalIgnoreCase))
             {
-                Log($"Found an asset that was already in R5Reloaded: {databasepath}, skipping!");
+                Log($"Found an asset that was already in R5Valkyrie: {databasepath}, skipping!");
                 return; // Skip this file
             }
 
@@ -442,7 +442,7 @@ class Program
 
             if (skipList.Contains(databasepath, StringComparer.OrdinalIgnoreCase))
             {
-                Log($"Found an asset that was already in R5Reloaded: {databasepath}, skipping!");
+                Log($"Found an asset that was already in R5Valkyrie: {databasepath}, skipping!");
                 return; // Skip this file
             }
             JObject newJsonObject = new JObject
